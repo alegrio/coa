@@ -1,5 +1,5 @@
-from Cuckoo.cuco_geral_min import *
-from Cuckoo.cuco_geral_max import *
+from cuco_geral_min import *
+from cuco_geral_max import *
 from random import seed
 from math import *
 import numpy as np
@@ -38,60 +38,9 @@ def rastringin(vector,dimension):
     
 
 
-def iterar_funcao(n, funcao, *args, **kwargs):
-    """
-    Executa a função especificada n vezes e armazena os resultados em um DataFrame.
-    
-    Args:
-        n (int): O número de iterações.
-        funcao (function): A função a ser iterada.
-        *args: Argumentos posicionais a serem passados para a função.
-        **kwargs: Argumentos de palavras-chave a serem passados para a função.
-        
-    Returns:
-        pandas.DataFrame: DataFrame contendo os resultados de cada iteração.
-    """
-    resultados = []
-    for i in range(n):
-        resultado_iteracao = funcao(*args, **kwargs)
-        resultados.append(resultado_iteracao)
-    
-    # Convertendo os resultados em DataFrame
-    df = pd.DataFrame(resultados)
-    return df
-
-# Exemplo de uso:
-# Suponha que você tenha uma função chamada minha_funcao que retorna algum valor
-#def minha_funcao(arg1, arg2):
-    # Aqui, uma função de exemplo que apenas soma os argumentos
-#    return arg1 + arg2
-
-# Chamando a função iterar_funcao para executar minha_funcao 5 vezes com argumentos 3 e 4
-#df_resultados = iterar_funcao(10, minha_funcao, 3, 4)
-#df_resultados = iterar_funcao(10,cuckoo_min,rastringin,5000,15,-100,100,30,0.2)
-
-# Salvando os resultados em um arquivo .xlsx
-#df_resultados.to_excel("resultados_rastringin30.xlsx", index=False)
-
-#df_resultados1 = iterar_funcao(10,cuckoo_min,spchat gpthere,5000,15,-100,100,10,0.2)
-#df_resultados1.to_excel("resultados_sphere10.xlsx", index=False)
-
-
-#df_resultados2 = iterar_funcao(10,cuckoo_min,sphere,5000,15,-100,100,30,0.2)
-#df_resultados2.to_excel("resultados_sphere30.xlsx", index=False)
-
-#df_resultados3 = iterar_funcao(10,cuckoo_min,schaffer,5000,30,-100,100,2,0.2)
-#df_resultados3.to_excel("resultados_schaffer.xlsx", index=False)
-
-#df_resultados4 = iterar_funcao(10,cuckoo_max,rosenbrock,5000,10,-100,100,2,0.2)
-#df_resultados4.to_excel("resultados_rosenbrock.xlsx", index=False)
-
-#df_resultados5 = iterar_funcao(10,cuckoo_max,himmelblau,5000,10,-2.1,2.1,2,0.2)
-#df_resultados5.to_excel("resultados_himmelblau.xlsx", index=False)
-
 def confiabilidade(vector,dimension):
 
-    seed(118092648)
+    #seed(118092648)
     ult = 23                # quantidade maxima de manutenções por componente
     j = 7                   # quantidade de componentes
     p = 0                   # probabilidade de manutenção não satisfatória
@@ -280,11 +229,35 @@ def confiabilidade(vector,dimension):
     return value
 
 
+
+def iterar_funcao(n, funcao, *args, **kwargs):
+    """
+    Executa a função especificada n vezes e armazena os resultados em um DataFrame.
+    
+    Args:
+        n (int): O número de iterações.
+        funcao (function): A função a ser iterada.
+        *args: Argumentos posicionais a serem passados para a função.
+        **kwargs: Argumentos de palavras-chave a serem passados para a função.
+        
+    Returns:
+        pandas.DataFrame: DataFrame contendo os resultados de cada iteração.
+    """
+    resultados = []
+    for i in range(n):
+        resultado_iteracao = funcao(*args, **kwargs)
+        resultados.append(resultado_iteracao)
+    
+    # Convertendo os resultados em DataFrame
+    df = pd.DataFrame(resultados)
+    return df
+
+
 #cuckoo_min(funcao,interações,população,limite_inferior,limite_superior,dimensoes,probalidade_de_abandono)
 
-cuckoo_min(sphere,500,10,-100,100,30,0.2)
+#cuckoo_min(sphere,50,10,-100,100,30,0.2)
 
-#cuckoo_min(confiabilidade,1000,20,-100,100,161,0.2)
+cuckoo_min(confiabilidade,100,20,-100,100,161,0.2)
 
 #df_resultados1 = iterar_funcao(5,cuckoo_min,confiabilidade,2000,20,-100,100,161,0.2)
 #df_resultados1.to_excel("resultados_conf200020.xlsx", index=False)

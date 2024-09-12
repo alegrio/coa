@@ -9,6 +9,7 @@ from copy import *
 
 #Variaveis globais
 
+global gbest_value
 global gbest_list
 global interactions
 global inferior_limit
@@ -75,17 +76,22 @@ def random_flight(function,nest):
 
     return new_nest
 
-def new_gbest(function,nest,gbest):
+def new_gbest(function,nest,gbest,gbest_value):
     #avalia ninho a ninho, sendo o menor fitness guardado como gbest.
+
     for i in range(len(nest)):
-        if fitness_value(function,nest[i],dimension) < fitness_value(function,gbest,dimension):
+        nest_fitness = fitness_value(function,nest[i],dimension)
+        if nest_fitness < gbest_value:
             gbest = deepcopy(nest[i])
+            gbest_value = nest_fitness
+            
     
-    return (gbest)
+    return (gbest,gbest_value)
 
 
 def cuckoo_min(function,local_interactions,local_population,local_inferior_limit,local_superior_limit,local_dimension,local_abandon_prob):
-
+    
+    global gbest_value
     global gbest_list
     global interactions
     global inferior_limit
@@ -105,19 +111,19 @@ def cuckoo_min(function,local_interactions,local_population,local_inferior_limit
 
     nest = np.random.uniform(inferior_limit,superior_limit,(population,dimension)) #cria os ninhos
     gbest = nest[0] #cria a variavel gbest colocando o primeiro ninho
-    gbest = new_gbest(function,nest,gbest) #avalia qual é o melhor fitness dentre os ninhos gerados e o guarda as variaveis do ninho
-    gbest_list = [fitness_value(function,gbest,dimension)] #cria a variavel que listará o gbest de cada geração afim de fazer um grafico
+    gbest_value = fitness_value(function,nest[0],dimension)
+    gbest,gbest_value = new_gbest(function,nest,gbest,gbest_value) #avalia qual é o melhor fitness dentre os ninhos gerados e o guarda as variaveis do ninho
+    gbest_list = [gbest_value] #cria a variavel que listará o gbest de cada geração afim de fazer um grafico
     counter = 0 #contador
 
     while counter < interactions:
         nest = levy_flight(nest, gbest) #realiza o voo de levy para cada ninho
-        gbest = new_gbest(function,nest, gbest) #avalia o novo melhor fitness
+        gbest,gbest_value = new_gbest(function,nest,gbest,gbest_value) #avalia o novo melhor fitness
         nest = random_flight(function,nest) #realiza o voo aleatorio
-        gbest = new_gbest(function,nest, gbest) #avalia um novo gbest e guarda as variaveis do melhor ninho
-        gbest_list.append(fitness_value(function,gbest,dimension)) #guarda o novo gbest desta geração
+        gbest,gbest_value = new_gbest(function,nest,gbest,gbest_value) #avalia um novo gbest e guarda as variaveis do melhor ninho
+        gbest_list.append(gbest_value) #guarda o novo gbest desta geração
         counter += 1
-        #print ('gbest =', gbest)
-        print ('fitness =',fitness_value(function,gbest,dimension))
+        print ('fitness =',gbest_value)
         print ('Geração =', counter)
     #print (fitness_value(function,gbest,dimension),gbest)
     
@@ -125,7 +131,7 @@ def cuckoo_min(function,local_interactions,local_population,local_inferior_limit
     
     plt.plot(interaction_number,gbest_list,marker='.')
     plt.show()
-    return (fitness_value(function,gbest,dimension))
+    return (gbest_value)
     
 
 
