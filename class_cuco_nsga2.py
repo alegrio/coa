@@ -227,7 +227,11 @@ class Farmer:
                 if egg.pareto:
                     pareto_optimal.append((egg.function_parameters, egg.fitness))
         self.pareto_optimal = pareto_optimal
+        
+        # Calcula o rank de cada ninho com base nos ranks dos ovos
 
+        for nest in self.nests:
+            nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
 
     def apply_levy_flight(self):
         for nest in self.nests:
@@ -238,9 +242,7 @@ class Farmer:
         Abandona os ninhos com base no rank dos ovos.
         """
         
-        # Calcula o rank de cada ninho com base nos ranks dos ovos
-        for nest in self.nests:
-            nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
+
 
         # Ordena os ninhos do menor rank para o maior
         self.nests.sort(key=lambda nest: nest.rank_ninho)
@@ -270,15 +272,19 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
         alegrio.apply_levy_flight()
         alegrio.check_pareto()  # Atualiza novamente após o voo de Lévy
         alegrio.rank_eggs()
-        # for nest_index, nest in enumerate(alegrio.nests):
-        #     print(f"  Ninho {nest_index + 1}:")
-        #     for egg_index, egg in enumerate(nest.eggs):
-        #         print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
+
+        # Calcula o rank de cada ninho com base nos ranks dos ovos
+        for nest in alegrio.nests:
+            nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
+
+        # Imprime os ranks dos ninhos e dos ovos
+        print(f"Geração: {i + 1}/{max_generation}")
+        for nest_index, nest in enumerate(alegrio.nests):
+            print(f"  Ninho {nest_index + 1}: Rank do Ninho = {nest.rank_ninho}")
+            for egg_index, egg in enumerate(nest.eggs):
+                print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
+
         alegrio.abandon_nests()
-
-        # Imprime os ranks dos ovos
-
-        print(f"Geração: {i + 1}/{max_generation} | Pareto ótimos: {len(alegrio.pareto_optimal)}")
     
     
 
@@ -294,7 +300,7 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
     print(f"Tempo total de execução: {elapsed_time:.2f} segundos")  # Exibe o tempo total
 
 
-main(max_generation=5000,
+main(max_generation=200,
      population_size=50,
      eggs_number=2,
      abandon_rate=0.5,
