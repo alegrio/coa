@@ -164,9 +164,8 @@ class Farmer:
         """
         Rankeia os ovos com base na dominância.
         """
-        # Reseta os ranks de todos os ovos e ninhos
+        # Reseta os ranks de todos os ovos
         for nest in self.nests:
-            nest.rank_ninho = None
             for egg in nest.eggs:
                 egg.rank = None
 
@@ -174,6 +173,7 @@ class Farmer:
         remaining_eggs = [egg for nest in self.nests for egg in nest.eggs]
 
         while remaining_eggs:
+           # print(f"Rank atual: {current_rank}, Ovos restantes: {len(remaining_eggs)}")
             non_dominated = []
             for egg in remaining_eggs:
                 is_dominated = False
@@ -184,6 +184,8 @@ class Farmer:
                 if not is_dominated:
                     non_dominated.append(egg)
 
+            #print(f"Ovos não dominados no rank {current_rank}: {len(non_dominated)}")
+
             # Atribui o rank atual aos ovos não dominados
             for egg in non_dominated:
                 egg.rank = current_rank
@@ -193,6 +195,13 @@ class Farmer:
 
             # Incrementa o rank para a próxima iteração
             current_rank += 1
+
+        # Verifica se algum ovo ficou sem rank (caso inesperado)
+        for nest in self.nests:
+            for egg in nest.eggs:
+                if egg.rank is None:
+                    print(f"Ovo sem rank encontrado: {egg.fitness}")
+                    egg.rank = current_rank  # Atribui o maior rank possível como fallback
 
     def check_pareto(self):
         """
@@ -228,6 +237,7 @@ class Farmer:
         """
         Abandona os ninhos com base no rank dos ovos.
         """
+        
         # Calcula o rank de cada ninho com base nos ranks dos ovos
         for nest in self.nests:
             nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
@@ -255,12 +265,22 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
     alegrio = Farmer(population_size, eggs_number, abandon_rate, env)
 
     for i in range(max_generation):
-        alegrio.check_pareto() # Atualiza a lista de Pareto ótimos
+        alegrio.check_pareto()  # Atualiza a lista de Pareto ótimos
+        alegrio.rank_eggs()
         alegrio.apply_levy_flight()
-        alegrio.check_pareto() # Atualiza novamente após o voo de Lévy
+        alegrio.check_pareto()  # Atualiza novamente após o voo de Lévy
+        alegrio.rank_eggs()
+        # for nest_index, nest in enumerate(alegrio.nests):
+        #     print(f"  Ninho {nest_index + 1}:")
+        #     for egg_index, egg in enumerate(nest.eggs):
+        #         print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
         alegrio.abandon_nests()
-        # print (alegrio.pareto_optimal)
+
+        # Imprime os ranks dos ovos
+
         print(f"Geração: {i + 1}/{max_generation} | Pareto ótimos: {len(alegrio.pareto_optimal)}")
+    
+    
 
     if len(alegrio.pareto_optimal) > 0:
         x = [item[0][0] for item in alegrio.pareto_optimal]
@@ -277,7 +297,7 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
 main(max_generation=5000,
      population_size=50,
      eggs_number=2,
-     abandon_rate=0.25,
+     abandon_rate=0.5,
      dimension=30,
      lower_bound=0,
      upper_bound=5,
