@@ -4,19 +4,28 @@ from math import pi, sin, cos
 from scipy.special import gamma 
 from matplotlib import pyplot as plt 
 import time  # Importa o módulo time
-
+import copy
 
 class Graph_controller(object):
     def __init__(self):
         pass
     
     @staticmethod
-    def plot(fitness1, fitness2):
-        plt.scatter(fitness1, fitness2)
+    def plot(pareto_optimal):
+        # Extrai os valores de fitness dos ovos no atributo pareto_optimal
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # Plotando os pontos calculados
+        plt.scatter(fitness1, fitness2, label="Soluções Calculadas", color="blue")
+
+        # Configurações do gráfico
         plt.xlabel("f1(x)")
         plt.ylabel("f2(x)")
         plt.title("Fronteira de Pareto")
+        plt.legend()
         plt.savefig("pareto_plot.png")
+        plt.show()
         
 class Fitness_controller(object):
     @staticmethod
@@ -28,7 +37,7 @@ class Fitness_controller(object):
         return np.array([f1, f2])
     
     @staticmethod
-    def sch(vector):
+    def sch(vector,dimension):
         """Schaffer's Min-Min (SCH) function (convex Pareto front)."""
         f1 = vector[0]**2
         f2 = (vector[0] - 2)**2
@@ -220,18 +229,27 @@ class Farmer:
                         if egg != other_egg and self.not_dominated(other_egg, egg):
                             egg.pareto = False
                             break
-        
-        pareto_optimal = []
+
         for nest in self.nests:
             for egg in nest.eggs:
                 if egg.pareto:
-                    pareto_optimal.append((egg.function_parameters, egg.fitness))
-        self.pareto_optimal = pareto_optimal
-        
-        # Calcula o rank de cada ninho com base nos ranks dos ovos
+                    self.pareto_optimal.append((copy.deepcopy(egg)))
 
+        non_dominated = []
+        for egg in self.pareto_optimal:
+            is_dominated = False
+            for other_egg in self.pareto_optimal:
+                if egg != other_egg and self.not_dominated(other_egg, egg):
+                    is_dominated = True
+                    break
+            if not is_dominated:
+                non_dominated.append(egg)
+        self.pareto_optimal = non_dominated
+
+
+        # Calcula o rank de cada ninho com base na soma dos quadrados dos ranks dos ovos
         for nest in self.nests:
-            nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
+            nest.rank_ninho = sum(egg.rank**2 for egg in nest.eggs if egg.rank is not None)
 
     def apply_levy_flight(self):
         for nest in self.nests:
@@ -272,26 +290,20 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
         alegrio.apply_levy_flight()
         alegrio.check_pareto()  # Atualiza novamente após o voo de Lévy
         alegrio.rank_eggs()
-
-        # Calcula o rank de cada ninho com base nos ranks dos ovos
-        for nest in alegrio.nests:
-            nest.rank_ninho = sum(egg.rank for egg in nest.eggs if egg.rank is not None)
-
-        # Imprime os ranks dos ninhos e dos ovos
-        print(f"Geração: {i + 1}/{max_generation}")
-        for nest_index, nest in enumerate(alegrio.nests):
-            print(f"  Ninho {nest_index + 1}: Rank do Ninho = {nest.rank_ninho}")
-            for egg_index, egg in enumerate(nest.eggs):
-                print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
-
         alegrio.abandon_nests()
+        # Imprime os ranks dos ovos
+        print(f"Geração: {i + 1}/{max_generation} | Pareto otimos: {len(alegrio.pareto_optimal)}")
+        # for nest_index, nest in enumerate(alegrio.nests):
+        #     print(f"  Ninho {nest_index + 1}:")
+        #     for egg_index, egg in enumerate(nest.eggs):
+        #         print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
+
+
     
     
 
     if len(alegrio.pareto_optimal) > 0:
-        x = [item[0][0] for item in alegrio.pareto_optimal]
-        y = [item[1][1] for item in alegrio.pareto_optimal]
-        Graph_controller.plot(x, y)
+        Graph_controller.plot(alegrio.pareto_optimal)
     else:
         print("Not enough Pareto optimal solutions to plot.")
 
@@ -300,11 +312,11 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
     print(f"Tempo total de execução: {elapsed_time:.2f} segundos")  # Exibe o tempo total
 
 
-main(max_generation=200,
+main(max_generation=2000,
      population_size=50,
      eggs_number=2,
      abandon_rate=0.5,
      dimension=30,
      lower_bound=0,
-     upper_bound=5,
+     upper_bound=1,
      fitness_function=Fitness_controller.zdt1)
