@@ -62,11 +62,103 @@ class Graph_controller(object):
         plt.savefig("pareto_plot_zdt1.png")
         plt.show()
         
+    @staticmethod
+    def plot_zdt2(pareto_optimal):
+        """
+        Plota a fronteira de Pareto real para ZDT2 junto com os resultados calculados.
+        """
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # Fronteira de Pareto verdadeira para ZDT2
+        x_true = np.linspace(0, 1, 500)
+        f1_true = x_true
+        f2_true = 1 - (x_true ** 2)
+        plt.plot(f1_true, f2_true, 'r-', linewidth=2, label="Fronteira de Pareto Verdadeira (ZDT2)", zorder=1)
+
+        # Plotando os pontos calculados
+        plt.scatter(fitness1, fitness2, s=10, color="blue", label="Soluções Calculadas", zorder=2)
+
+        # Configurações do gráfico
+        plt.xlabel("f1(x)")
+        plt.ylabel("f2(x)")
+        plt.title("Fronteira de Pareto - Comparação com ZDT2")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("pareto_plot_zdt2.png")
+        plt.show()
+
+    @staticmethod
+    def plot_zdt3(pareto_optimal):
+        """
+        Plota a fronteira de Pareto real para ZDT3 junto com os resultados calculados.
+        """
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # Fronteira de Pareto verdadeira para ZDT3
+        x_true = np.linspace(0, 1, 500)
+        f1_true = x_true
+        f2_true = 1 - np.sqrt(x_true) - x_true * np.sin(10 * np.pi * x_true)
+        plt.plot(f1_true, f2_true, 'r-', linewidth=2, label="Fronteira de Pareto Verdadeira (ZDT3)", zorder=1)
+
+        # Plotando os pontos calculados
+        plt.scatter(fitness1, fitness2, s=10, color="blue", label="Soluções Calculadas", zorder=2)
+
+        # Configurações do gráfico
+        plt.xlabel("f1(x)")
+        plt.ylabel("f2(x)")
+        plt.title("Fronteira de Pareto - Comparação com ZDT3")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("pareto_plot_zdt3.png")
+        plt.show()
+
+    @staticmethod
+    def plot_lz(pareto_optimal):
+        """
+        Plota os resultados calculados para a função LZ.
+        """
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # Plotando os pontos calculados
+        plt.scatter(fitness1, fitness2, s=10, color="blue", label="Soluções Calculadas", zorder=2)
+
+        # Configurações do gráfico
+        plt.xlabel("f1(x)")
+        plt.ylabel("f2(x)")
+        plt.title("Fronteira de Pareto - LZ")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("pareto_plot_lz.png")
+        plt.show()
+
+    @staticmethod
+    def plot_custom_function(pareto_optimal):
+        """
+        Plota os resultados calculados para a função personalizada.
+        """
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # Plotando os pontos calculados
+        plt.scatter(fitness1, fitness2, s=10, color="blue", label="Soluções Calculadas", zorder=2)
+
+        # Configurações do gráfico
+        plt.xlabel("f1(x)")
+        plt.ylabel("f2(x)")
+        plt.title("Fronteira de Pareto - Função Personalizada")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("pareto_plot_custom_function.png")
+        plt.show()
+
 class Fitness_controller(object):
     @staticmethod
     def zdt1(vector, dimension):
         f1 = vector[0]
-        g = 1.0 + 9.0 * np.sum(vector[1:]) / (dimension - 1)
+        g = 1.0 + (9.0/(dimension - 1) )* np.sum(vector[1:])
         h = 1.0 - np.sqrt(f1 / g)
         f2 = g * h
         return np.array([f1, f2])
@@ -207,7 +299,7 @@ class Farmer:
     def check_pareto(self):
         """
         Marca os ovos como Pareto ótimos ou não, com base na dominância.
-        Remove duplicatas de fitness e mantém apenas ovos não dominados.
+        Remove duplicatas ao final.
         """
         # Inicialmente, marca todos os ovos como Pareto ótimos
         for nest in self.nests:
@@ -223,29 +315,39 @@ class Farmer:
                             egg.pareto = False
                             break
 
-        # Adiciona ovos não dominados à lista pareto_optimal
-        self.pareto_optimal = []
+        # Adiciona os ovos Pareto ótimos à lista pareto_optimal
         for nest in self.nests:
             for egg in nest.eggs:
                 if egg.pareto:
                     self.pareto_optimal.append(copy.deepcopy(egg))
 
-        # Remove ovos com fitness duplicados
-        unique_pareto = []
-        seen_fitness = set()
+        # Remove ovos dominados dentro da lista pareto_optimal
+        non_dominated = []
         for egg in self.pareto_optimal:
-            fitness_tuple = tuple(egg.fitness)  # Converte o fitness em uma tupla para comparação
-            if fitness_tuple not in seen_fitness:
-                unique_pareto.append(egg)
-                seen_fitness.add(fitness_tuple)
+            is_dominated = False
+            for other_egg in self.pareto_optimal:
+                if egg != other_egg and self.not_dominated(other_egg, egg):
+                    is_dominated = True
+                    break
+            if not is_dominated:
+                non_dominated.append(egg)
+        self.pareto_optimal = non_dominated
 
-        # Atualiza a lista pareto_optimal sem duplicatas
+        # Remove duplicatas na lista pareto_optimal
+        unique_pareto = []
+        seen = set()
+        for egg in self.pareto_optimal:
+            egg_signature = (tuple(egg.fitness), tuple(egg.function_parameters))
+            if egg_signature not in seen:
+                seen.add(egg_signature)
+                unique_pareto.append(egg)
         self.pareto_optimal = unique_pareto
 
         # Calcula o rank de cada ninho com base na soma dos quadrados dos ranks dos ovos
         for nest in self.nests:
             nest.rank_ninho = sum(egg.rank**2 for egg in nest.eggs if egg.rank is not None)
 
+            
     def rank_eggs(self):
         """
         Rankeia os ovos com base na dominância.
@@ -335,6 +437,22 @@ class Farmer:
         df.to_excel(filename, index=False)
         print(f"Pareto ótimos salvos em: {filename}")
 
+    def remove_duplicate_pareto(self):
+        """
+        Remove ovos duplicados na lista pareto_optimal, mantendo apenas uma cópia de cada.
+        """
+        unique_pareto = []
+        seen = set()
+
+        for egg in self.pareto_optimal:
+            # Converte o fitness e os parâmetros da função em uma tupla para verificar duplicatas
+            egg_signature = (tuple(egg.fitness), tuple(egg.function_parameters))
+            if egg_signature not in seen:
+                seen.add(egg_signature)
+                unique_pareto.append(egg)
+
+        self.pareto_optimal = unique_pareto
+
 def main(max_generation, population_size, eggs_number, abandon_rate, dimension, lower_bound, upper_bound, fitness_function):
     """
     Função principal para executar o algoritmo.
@@ -359,7 +477,7 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
 
     # Gera o gráfico e salva os resultados
     if len(alegrio.pareto_optimal) > 0:
-        Graph_controller.plot_sch(alegrio.pareto_optimal)  # Substitua por plot_zdt1 se necessário
+        Graph_controller.plot_zdt3(alegrio.pareto_optimal)  # Substitua por plot_zdt1 se necessário
         alegrio.save_pareto_to_excel()  # Salva os indivíduos em pareto_optimal
     else:
         print("Not enough Pareto optimal solutions to plot.")
@@ -369,11 +487,11 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
     elapsed_time = end_time - start_time
     print(f"Tempo total de execução: {elapsed_time:.2f} segundos")
     
-main(max_generation=1000, 
+main(max_generation=500, 
      population_size=50, 
      eggs_number=2, 
      abandon_rate=0.5, 
-     dimension=1, 
-     lower_bound=-1000, 
-     upper_bound=1000, 
-     fitness_function=Fitness_controller.sch)
+     dimension=30, 
+     lower_bound=-0, 
+     upper_bound=1, 
+     fitness_function=Fitness_controller.zdt3)
