@@ -5,26 +5,61 @@ from scipy.special import gamma
 from matplotlib import pyplot as plt 
 import time  # Importa o módulo time
 import copy
+import pandas as pd  # Certifique-se de importar o pandas no início do arquivo
 
 class Graph_controller(object):
     def __init__(self):
         pass
     
     @staticmethod
-    def plot(pareto_optimal):
+    def plot_sch(pareto_optimal):
         # Extrai os valores de fitness dos ovos no atributo pareto_optimal
         fitness1 = [egg.fitness[0] for egg in pareto_optimal]
         fitness2 = [egg.fitness[1] for egg in pareto_optimal]
 
-        # Plotando os pontos calculados
-        plt.scatter(fitness1, fitness2, label="Soluções Calculadas", color="blue")
+        # --- Adicionando a fronteira de Pareto verdadeira da Schaffer min-min ---
+        x_true = np.linspace(0, 2, 100)  # Intervalo onde está a fronteira de Pareto
+        f1_true = x_true ** 2
+        f2_true = (x_true - 2) ** 2
+        plt.plot(f1_true, f2_true, 'r-', linewidth=2, label="Fronteira de Pareto Verdadeira (Schaffer)", zorder=1)
 
-        # Configurações do gráfico
+        # --- Plotando os pontos calculados ---
+        plt.scatter(fitness1, fitness2, s=15,  label="Soluções Calculadas", zorder=2)
+
+        # --- Configurações do gráfico ---
+        plt.xlabel("f1(x) = x²")
+        plt.ylabel("f2(x) = (x-2)²")
+        plt.title("Fronteira de Pareto - Comparação com Schaffer min-min")
+        plt.legend()
+        plt.grid(True)  # Adiciona grade para melhor visualização
+        plt.savefig("pareto_plot_schaffer.png")
+        plt.show()
+        
+    @staticmethod
+    def plot_zdt1(pareto_optimal):
+        """
+        Plota a fronteira de Pareto real para ZDT1 junto com os resultados calculados.
+        """
+        # Extrai os valores de fitness dos ovos no atributo pareto_optimal
+        fitness1 = [egg.fitness[0] for egg in pareto_optimal]
+        fitness2 = [egg.fitness[1] for egg in pareto_optimal]
+
+        # --- Adicionando a fronteira de Pareto verdadeira da ZDT1 ---
+        x_true = np.linspace(0, 1, 500)  # Intervalo onde está a fronteira de Pareto
+        f1_true = x_true
+        f2_true = 1 - np.sqrt(x_true)
+        plt.plot(f1_true, f2_true, 'r-', linewidth=2, label="Fronteira de Pareto Verdadeira (ZDT1)", zorder=1)
+
+        # --- Plotando os pontos calculados ---
+        plt.scatter(fitness1, fitness2, s=10, color="blue", label="Soluções Calculadas", zorder=2)
+
+        # --- Configurações do gráfico ---
         plt.xlabel("f1(x)")
         plt.ylabel("f2(x)")
-        plt.title("Fronteira de Pareto")
+        plt.title("Fronteira de Pareto - Comparação com ZDT1")
         plt.legend()
-        plt.savefig("pareto_plot.png")
+        plt.grid(True)  # Adiciona grade para melhor visualização
+        plt.savefig("pareto_plot_zdt1.png")
         plt.show()
         
 class Fitness_controller(object):
@@ -277,6 +312,25 @@ class Farmer:
             new_nest = Nest(self.nests[0].eggs_number, self.env)  # Usa os mesmos parâmetros dos ninhos existentes
             self.nests.append(new_nest)
 
+    def save_pareto_to_excel(self, filename="pareto_optimal.xlsx"):
+        """
+        Salva os indivíduos em pareto_optimal em um arquivo .xlsx.
+        Cada linha representa um indivíduo com f1, f2 e seus function_parameters.
+        """
+        data = []
+        for egg in self.pareto_optimal:
+            # Cria uma linha com f1, f2 e os parâmetros da função
+            row = list(egg.fitness) + list(egg.function_parameters)
+            data.append(row)
+
+        # Cria um DataFrame com as colunas apropriadas
+        num_params = len(self.pareto_optimal[0].function_parameters) if self.pareto_optimal else 0
+        columns = ["f1", "f2"] + [f"x{i+1}" for i in range(num_params)]
+        df = pd.DataFrame(data, columns=columns)
+
+        # Salva o DataFrame em um arquivo .xlsx
+        df.to_excel(filename, index=False)
+        print(f"Pareto ótimos salvos em: {filename}")
 
 def main(max_generation, population_size, eggs_number, abandon_rate, dimension, lower_bound, upper_bound, fitness_function):
     start_time = time.time()  # Marca o início do tempo
@@ -292,18 +346,11 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
         alegrio.rank_eggs()
         alegrio.abandon_nests()
         # Imprime os ranks dos ovos
-        print(f"Geração: {i + 1}/{max_generation} | Pareto otimos: {len(alegrio.pareto_optimal)}")
-        # for nest_index, nest in enumerate(alegrio.nests):
-        #     print(f"  Ninho {nest_index + 1}:")
-        #     for egg_index, egg in enumerate(nest.eggs):
-        #         print(f"    Ovo {egg_index + 1}: Rank = {egg.rank}")
-
-
-    
-    
+        print(f"Geração: {i + 1}/{max_generation} | Pareto ótimos: {len(alegrio.pareto_optimal)}")
 
     if len(alegrio.pareto_optimal) > 0:
-        Graph_controller.plot(alegrio.pareto_optimal)
+        Graph_controller.plot_sch(alegrio.pareto_optimal)
+        alegrio.save_pareto_to_excel()  # Salva os indivíduos em pareto_optimal
     else:
         print("Not enough Pareto optimal solutions to plot.")
 
@@ -312,11 +359,11 @@ def main(max_generation, population_size, eggs_number, abandon_rate, dimension, 
     print(f"Tempo total de execução: {elapsed_time:.2f} segundos")  # Exibe o tempo total
 
 
-main(max_generation=2000,
+main(max_generation=100,
      population_size=50,
      eggs_number=2,
      abandon_rate=0.5,
-     dimension=30,
-     lower_bound=0,
-     upper_bound=1,
-     fitness_function=Fitness_controller.zdt1)
+     dimension=1,
+     lower_bound=-1000,
+     upper_bound=1000,
+     fitness_function=Fitness_controller.sch)
