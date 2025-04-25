@@ -192,7 +192,7 @@ class Nest:
             return
 
         alpha = 0.1
-        beta = 2.0
+        beta = 1.5
         sigma = (gamma(1 + beta) * sin(pi * beta / 2.0) /
                  (gamma((1 + beta) / 2) * beta * 2.0 ** ((beta - 1) / 2.0))) ** (1.0 / beta)
 
