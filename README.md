@@ -1,2 +1,0 @@
-# coa
-Cuckoo Optimization Algorithm
