@@ -1,5 +1,5 @@
 from cuco_geral_min import *
-from cuco_geral_max import *
+#from cuco_geral_max import *
 from random import seed
 from math import *
 import numpy as np
@@ -40,7 +40,7 @@ def rastringin(vector,dimension):
 
 def confiabilidade(vector,dimension):
 
-    #seed(118092648)
+    seed(118092648)
     ult = 23                # quantidade maxima de manutenções por componente
     j = 7                   # quantidade de componentes
     p = 0                   # probabilidade de manutenção não satisfatória
@@ -220,10 +220,10 @@ def confiabilidade(vector,dimension):
 
     value = wd * (1-rmediasistema) + wc*custo_total
     #print('Melhor solução =', tm_final)
-    #print('Custo =', wc*custo_total)
+    print('Custo =', custo_total)
     #print('Não conf =', wd*(1-rmediasistema))
-    #print('Conf = ', 1-(wd*(1-rmediasistema)))
-    #print('fitness =', value)
+    print('Risco = ', 1-rmediasistema)
+    print('fitness =', value)
     
     #print('vector depois =',vector)
     return value
@@ -257,7 +257,7 @@ def iterar_funcao(n, funcao, *args, **kwargs):
 
 #cuckoo_min(sphere,50,10,-100,100,30,0.2)
 
-cuckoo_min(confiabilidade,100,20,-100,100,161,0.2)
+cuckoo_min(confiabilidade,5000,100,-540,540,161,0.25)
 
 #df_resultados1 = iterar_funcao(5,cuckoo_min,confiabilidade,2000,20,-100,100,161,0.2)
 #df_resultados1.to_excel("resultados_conf200020.xlsx", index=False)
