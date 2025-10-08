@@ -1,4 +1,4 @@
-from cuco_geral_min import *
+from cs import *
 #from cuco_geral_max import *
 from random import seed
 from math import *
